@@ -25,6 +25,18 @@ set -e
 # See the Licence for the specific language governing
 # permissions and limitations under the Licence.
 
+function common_setup () {
+	if ! [ -d debian ]
+	then
+		print "Please run command $0 $1 from within the source directory"
+		exit 1;
+	fi
+
+	APPNAME="$(grep-dctrl -n -F Source -s Source '' < debian/control)"
+	DEBVERSION="$(dpkg-parsechangelog | grep-dctrl -n -s Version '')"
+	WINE_MASTER_DIR=~/".wine-$APPNAME-master"
+}
+
 if [ ! "$1" ]
 then
 	cat <<'__END__'
@@ -53,16 +65,21 @@ wine-app-packager commit
 	Takes the changes you made in ~/.wine-<application>-master and puts them
 	back into the Debian source package. Ususally, this will be followed by
 	calls to debchange and debuilt to build the package
+	Removes ~/.wine-<application>-master afterwards.
+
+wine-app-packager abort
+	Just removes ~/.wine-<application>-master, throwing away all changes.
 __END__
 	exit 1;
 fi
 
 if [ "$1" = "init" ]
 then
-	cat <<''
+	cat <<__END__
 Please enter the name of the application (only lower letters, digits, dots and
 dashes. It will be both the package name and the name of the wrapper executable.
 Example: wsftp
+__END__
 
 	read APPNAME
 	if [ -z "$APPNAME" -o -n "$(echo -n "$APPNAME" | tr -d a-z0-9.-)" ]
@@ -71,10 +88,11 @@ Example: wsftp
 		exit 1
 	fi
 
-	cat <<''
+	cat <<__END__
 Please enter the upstream version of the application, with the same conventions.
 If there is no meaningful version, leave this field empty.
 Example: 1.0
+__END__
 
 	read APPVER
 	if [ -n "$(echo -n "$APPVER" | tr -d a-z0-9.-)" ]
@@ -85,19 +103,18 @@ Example: 1.0
 
 	if [ -z "$APPVER" ]
 	then
-		DEBNAME="$APPNAME"
 		DEBVER="1"
 	else
-		DEBNAME="$APPNAME"
 		DEBVER="$APPVER"
 	fi
-	DEBDIR="$DEBNAME-$DEBVER"
+	DEBDIR="$APPNAME-$DEBVER"
 
 	if [ -e "$DEBDIR" ]
 	then
-		echo <<""
+		cat <<__END__
 The directory \"$DEBDIR\" does already exist. Please remove it if you want to
 start from scratch.
+__END__
 
 		exit 1
 	fi
@@ -110,17 +127,17 @@ start from scratch.
 	then
 		MAINT="$DEBFULLNAME <$DEBEMAIL>"
 	else
-		echo <<''
+		cat <<__END__
 WARNING: DEBFULLNAME and DEBEMAIL not set. Please adjust maintainer field
 in debian/control and debian/changelog afterwards.
-
+__END__
 		MAINT="Someone <please-update@in.here>"
 	fi
 	cat >"$DEBDIR/debian/control" <<__END__
-Source: $DEBNAME
+Source: $APPNAME
 Maintainer: $MAINT
 
-Package: $DEBNAME
+Package: $APPNAME
 Architecture: i386
 Depends: wine
 Description: Application $APPNAME
@@ -171,11 +188,97 @@ binary: binary-indep binary-arch
 __END__
 	echo "Generating \"$DEBDIR/debian/changelog\""
 	pushd "$DEBDIR"
- 	debchange --create --package "$DEBNAME" --newversion "$DEBVER-1" --distribution UNRELEASED "First release of $APPNAME"
+ 	debchange --create --package "$APPNAME" --newversion "$DEBVER-1" --distribution UNRELEASED "First release of $APPNAME"
 	popd
-	echo <<''
+	cat <<__END__
 Done preparing the source package. You can review the contents of these files
-now, or go ahead with wine-app-packager prepare.
+now, or go ahead with wine-app-packager prepare, from within the created source
+directory in $DEBDIR.
+__END__
 
+elif [ "$1" = "prepare" ]
+then
+	common_setup
+
+	if [ -e "$WINE_MASTER_DIR" ]
+	then
+		cat <<__END__
+Directory $WINE_MASTER_DIR already exists. If it contains changes
+that need to be preserved, please use $0 commit, otherwise remove
+it before running $0 $1.
+__END__
+		exit 1
+	fi
+
+	if [ -d drive_c ]
+	then
+		echo "Creating $WINE_MASTER_DIR"
+		mkdir "$WINE_MASTER_DIR"
+		echo "Extracting ./wine-config.tar.gz to $WINE_MASTER_DIR"
+		tar --extract --gzip --file ./wine-config.tar.gz -C "$WINE_MASTER_DIR"
+		echo "Copying ./drive_c to $WINE_MASTER_DIR/drive_c"
+		rsync --recursive ./drive_c/ $WINE_MASTER_DIR/drive_c
+	else
+		echo "Empty package, creating empty $WINE_MASTER_DIR"
+		mkdir "$WINE_MASTER_DIR"
+	fi
+elif [ "$1" = "run" ]
+then
+	common_setup
+
+	if [ ! -d "$WINE_MASTER_DIR" ]
+	then
+		cat <<__END__
+Directory $WINE_MASTER_DIR does not exist. Please run $0 $1 prepare first.
+__END__
+		exit 1
+	fi
+
+	if [ -z "$2" ]
+	then
+		cat <<__END__
+You need to pass a program to be run, e.g. $0 $1 wine setup.exe
+__END__
+		exit 1
+	fi
+
+	export WINEPREFIX=$WINE_MASTER_DIR
+	shift
+	exec "$@"
+elif [ "$1" = "commit" ]
+then
+	common_setup
+
+	if [ ! -d "$WINE_MASTER_DIR" ]
+	then
+		cat <<__END__
+Directory $WINE_MASTER_DIR does not exist. Please run $0 $1 prepare first.
+__END__
+		exit 1
+	fi
+
+	echo "Copying over $WINE_MASTER_DIR in a tarfile, excluding drive_c"
+	tar --create --file ./wine-config.tar.gz --gzip --directory "$WINE_MASTER_DIR" --exclude drive_c .
+	echo "Copying over drive_c, excluding Profiles"
+	rsync --recursive --delete --exclude windows/profiles --exclude windows/temp "$WINE_MASTER_DIR/drive_c/" drive_c
+
+	echo "Removing $WINE_MASTER_DIR"
+	rm -rf "$WINE_MASTER_DIR"
+elif [ "$1" = "abort" ]
+then
+	common_setup
+
+	if [ ! -d "$WINE_MASTER_DIR" ]
+	then
+		cat <<__END__
+Directory $WINE_MASTER_DIR does not exist, nothing to abort.
+__END__
+		exit 1
+	fi
+
+	echo "Removing $WINE_MASTER_DIR"
+	rm -rf "$WINE_MASTER_DIR"
+else
+	echo "Unknown command $1. Please run $0 without commands for a usage summary."
+	exit 1
 fi
-	
