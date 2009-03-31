@@ -264,6 +264,11 @@ __END__
 
 	echo "Removing $WINE_MASTER_DIR"
 	rm -rf "$WINE_MASTER_DIR"
+	cat <<__END__
+Change are propagated to the Debian source directory. To build the package,
+increase the version number with "debchange -i" and build it with dpkg-buildpackage.
+__END__
+
 elif [ "$1" = "abort" ]
 then
 	common_setup
