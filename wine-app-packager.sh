@@ -138,7 +138,7 @@ Source: $APPNAME
 Maintainer: $MAINT
 
 Package: $APPNAME
-Architecture: i386
+Architecture: all
 Depends: wine
 Description: Application $APPNAME
  This is a windows application packaged for Debian clients.
@@ -148,6 +148,9 @@ __END__
 	echo "Writing \"$DEBDIR/debian/rules\""
 	cat >"$DEBDIR/debian/rules" <<__END__
 #!/usr/bin/make -f
+build:
+	
+
 clean:
 	dh_testdir
 	dh_testroot
@@ -186,6 +189,38 @@ binary-arch: install
 binary: binary-indep binary-arch
 .PHONY: clean binary-indep binary-arch binary install
 __END__
+	chmod +x "$DEBDIR/debian/rules"
+	echo "Generating \"$DEBDIR/debian/install\""
+	cat >"$DEBDIR/debian/install" <<__END__
+drive_c /opt/wineapps/wine-$APPNAME/
+wine-config.tar.gz /opt/wineapps/wine-$APPNAME/
+$APPNAME /usr/bin
+__END__
+	echo "Generating \"$APPNAME\" (start wrapper. Please adjust variables at the top)"
+	cat >"$DEBDIR/$APPNAME" <<__END__
+#!/bin/bash
+
+# This variable need to be set:
+EXE='c:\\Programme\\Please Adjust\\start.exe'
+
+# These are already filled correctly
+APPNAME="$APPNAME"
+WINE_HOME="\$HOME/.wine-\$APPNAME"
+
+set -e
+if [ ! -d "\$WINE_HOME" ]
+then
+	echo "\$APPNAME started for the first time, creating \$WINE_HOME"
+	mkdir -p "\$WINE_HOME"
+	tar --extract --gzip --file /opt/wineapps/wine-\$APPNAME/wine-config.tar.gz -C "\$WINE_HOME"
+	cp -r --symbolic-link /opt/wineapps/wine-\$APPNAME/drive_c/ "\$WINE_HOME"/drive_c
+fi
+
+
+export WINEPREFIX="\$WINE_HOME"
+exec wine "\$EXE"
+__END__
+	chmod +x "$DEBDIR/$APPNAME" 
 	echo "Generating \"$DEBDIR/debian/changelog\""
 	pushd "$DEBDIR"
  	debchange --create --package "$APPNAME" --newversion "$DEBVER-1" --distribution UNRELEASED "First release of $APPNAME"
@@ -266,7 +301,7 @@ __END__
 	rm -rf "$WINE_MASTER_DIR"
 	cat <<__END__
 Change are propagated to the Debian source directory. To build the package,
-increase the version number with "debchange -i" and build it with dpkg-buildpackage.
+increase the version number with "debchange -i" and build it with "dpkg-buildpackage -uc -us".
 __END__
 
 elif [ "$1" = "abort" ]
