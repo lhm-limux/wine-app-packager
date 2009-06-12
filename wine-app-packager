@@ -68,7 +68,7 @@ wine-app-packager run <cmd>
 wine-app-packager commit
 	Takes the changes you made in ~/.wine-<application>-master and puts them
 	back into the Debian source package. Ususally, this will be followed by
-	calls to debchange and debuilt to build the package
+	calls to debchange and debuild to build the package.
 	Removes ~/.wine-<application>-master afterwards.
 
 wine-app-packager abort
