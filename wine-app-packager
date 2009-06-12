@@ -165,7 +165,12 @@ install: build
 	dh_testroot
 	dh_clean -k
 	dh_installdirs
-
+	
+	if grep -q "^EXE='c:.Programme.Please Adjust.start.exe'" $APPNAME ; \
+	then echo "Please update the EXE variable in the script $APPNAME"; \
+	     exit 1; \
+	fi;
+	
 	# Add here commands to install the package into debian/<packagename>
 	#\$(MAKE) prefix=\`pwd\`/debian/\`dh_listpackages\`/usr install
 
@@ -227,7 +232,7 @@ __END__
 	chmod +x "$DEBDIR/$APPNAME" 
 	echo "Generating \"$DEBDIR/debian/changelog\""
 	pushd "$DEBDIR"
- 	debchange --create --package "$APPNAME" --newversion "$DEBVER-1" --distribution UNRELEASED "First release of $APPNAME"
+ 	debchange --create --package "$APPNAME" --newversion "$DEBVER" --distribution UNRELEASED "First release of $APPNAME"
 	popd
 	cat <<__END__
 Done preparing the source package. You can review the contents of these files
