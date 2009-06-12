@@ -1,0 +1,49 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+VERSION=$(shell dpkg-parsechangelog | sed -ne 's/Version: *\(.*\) *$$/\1/p')
+
+build:
+
+clean: 
+	dh_testdir
+	dh_testroot
+	dh_clean 
+
+install:
+	dh_testdir
+	dh_testroot
+	dh_prep  
+	dh_installdirs
+
+	# Write the package version into the script
+	find "$(CURDIR)/debian/wine-app-packager" -name 'wine-app-packager' | \
+		xargs sed -i -e 's,@VERSION@,$(VERSION),g'
+
+# Build architecture-independent files here.
+binary-arch: install
+# We have nothing to do by default.
+
+# Build architecture-dependent files here.
+binary-indep: install
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs 
+	dh_installdocs
+	dh_installexamples
+	dh_installman
+	dh_link
+	dh_strip
+	dh_compress
+	dh_fixperms
+	dh_installdeb
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install

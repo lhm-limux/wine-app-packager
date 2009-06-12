@@ -1,0 +1,14 @@
+Source: wine-app-packager
+Section: utils
+Priority: extra
+Maintainer: Joachim Breitner <joachim.breitner@itomig.de>
+Build-Depends: debhelper (>= 7)
+Standards-Version: 3.8.1
+
+Package: wine-app-packager
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: helps you creating Debian packages for Windows program
+ This script guides you in wrapping a Windows program in a Debian package,
+ based on wine. It will create a template Debian source package for you and
+ include the C:\ directory tree of your program.
