@@ -140,6 +140,7 @@ __END__
 	cat >"$DEBDIR/debian/control" <<__END__
 Source: $APPNAME
 Maintainer: $MAINT
+Build-Depends: debhelper (>= 6.0.7~)
 
 Package: $APPNAME
 Architecture: all
@@ -174,10 +175,10 @@ install: build
 	# Add here commands to install the package into debian/<packagename>
 	#\$(MAKE) prefix=\`pwd\`/debian/\`dh_listpackages\`/usr install
 
-binary-indep: install
-
-# Build architecture-dependent files here.
 binary-arch: install
+	# nothing to do here
+
+binary-indep: install
 	dh_testdir
 	dh_testroot
 	dh_installchangelogs
@@ -185,6 +186,7 @@ binary-arch: install
 	dh_installexamples
 	dh_install
 	dh_installman
+	dh_lintian
 	dh_link
 	dh_strip
 	dh_compress
@@ -199,6 +201,20 @@ binary: binary-indep binary-arch
 .PHONY: clean binary-indep binary-arch binary install
 __END__
 	chmod +x "$DEBDIR/debian/rules"
+	echo "Writing \"$DEBDIR/debian/lintian-overrides"
+	cat > "$DEBDIR/debian/lintian-overrides" <<__END__
+dir-or-file-in-opt
+binary-without-manpage
+no-copyright-file
+no-section-field
+no-priority-field
+extra-license-file
+__END__
+	echo "Writing \"$DEBDIR/debian/source.lintian-overrides"
+	cat > "$DEBDIR/debian/source.lintian-overrides" <<__END__
+no-standards-version-field
+no-section-field-for-source
+__END__
 	echo "Generating \"$DEBDIR/debian/install\""
 	cat >"$DEBDIR/debian/install" <<__END__
 drive_c /opt/wineapps/wine-$APPNAME/
