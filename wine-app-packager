@@ -8,6 +8,8 @@ set -e
 #
 # © 2009 Joachim Breitner <joachim.breitner@itomig.de>
 #
+# Version: @VERSION@
+#
 # Licensed under the EUPL, Version 1.0 or – as soon they
 # will be approved by the European Commission - subsequent
 # versions of the EUPL (the "Licence");
@@ -42,6 +44,8 @@ then
 	cat <<'__END__'
 wine-app-packager
 =================
+
+Version: @VERSION@
 
 This script aids you in creation of Debian packages of Windows applications
 that are meant to run under wine. It offers the following commands:

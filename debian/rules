@@ -17,11 +17,10 @@ install:
 	dh_testdir
 	dh_testroot
 	dh_prep  
-	dh_installdirs
+	dh_install
 
 	# Write the package version into the script
-	find "$(CURDIR)/debian/wine-app-packager" -name 'wine-app-packager' | \
-		xargs sed -i -e 's,@VERSION@,$(VERSION),g'
+	sed -i -e 's,@VERSION@,$(VERSION),g' "$(CURDIR)/debian/wine-app-packager/usr/bin/wine-app-packager" 
 
 # Build architecture-independent files here.
 binary-arch: install
