@@ -13,7 +13,7 @@ fi
 set -e
 set -x
 
-sourcedir="$(dirname "$PWD/$0")"
+sourcedir="$(dirname "`pwd`/$0")"
 tmpdir=$(mktemp -t -d wine-app-packager-test.XXXXXXXX)
 trap "rm -rf \"$tmpdir\"" EXIT
 cd $tmpdir
@@ -47,18 +47,20 @@ then
 	exit 1
 fi
 
-$WAP run $sourcedir/testdata/7z465.exe /S
+cp $sourcedir/testdata/7z465.exe ../
+$WAP run ../7z465.exe /S
+sleep 1
 
 $WAP commit
 
 echo This should fail:
-! dpkg-buildpackage -uc -us 
+! debuild -uc -us 
 
 echo Setting .exe name in script
 sed -i -e 's/EXE=.*/EXE='\''c:\\Programme\\7-Zip\\7zFM.exe'\''/' 7z
 
 echo And now this should work:
-dpkg-buildpackage -uc -us 
+debuild -uc -us 
 
 if ! debc | grep -q ./opt/wineapps/wine-7z/drive_c/Programme/7-Zip/7zFM.exe
 then
