@@ -145,7 +145,7 @@ Build-Depends: debhelper (>= 6.0.7~)
 
 Package: $APPNAME
 Architecture: all
-Depends: wine
+Depends: \${wine:Depends}
 Description: Application $APPNAME
  This is a windows application packaged for Debian clients.
 __END__
@@ -172,9 +172,6 @@ install: build
 	then echo "Please update the EXE variable in the script $APPNAME"; \
 	     exit 1; \
 	fi;
-	
-	# Add here commands to install the package into debian/<packagename>
-	#\$(MAKE) prefix=\`pwd\`/debian/\`dh_listpackages\`/usr install
 
 binary-arch: install
 	# nothing to do here
@@ -194,7 +191,7 @@ binary-indep: install
 	dh_fixperms
 	dh_installdeb
 	dh_shlibdeps
-	dh_gencontrol
+	dh_gencontrol -- -Vwine:Depends="\$\$(dpkg-query -S \$\$(readlink -f /usr/bin/wine) | cut -d: -f1)"
 	dh_md5sums
 	dh_builddeb
 
