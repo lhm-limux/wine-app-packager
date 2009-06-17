@@ -17,12 +17,20 @@ wine-app-packager \- helps you creating Debian packages for Windows programs
 guides you in wrapping a Windows program in a Debian package,
 based on wine. It will create a template Debian source package for you and
 include the \fIC:\\\fR directory tree of your program.
+.PP
+The produced packages will install the provided \fIdrive_c/\fR directory to
+\fI/opt/wineapps/wine-<application>\fR and a copy of the wine configuration as
+\fI/opt/wineapps/wine-<application>/wine-config.tar.gz\fR. A wrapper will be
+placed in \fI/usr/bin/<application>\fR. The package will depend on the
+currently used wine package, i.e. the package that ships \fI/usr/bin/wine\fR. If that file happens to be a symlink, it will be followed.
+
 .SH OPTIONS
 .TP
 .B wine-app-packager\fR init
 creates a Debian source package directory. It will ask various pieces
-of information. All the following commands will need to run within the
-created directory.
+of information. All the following commands need to be run within the
+directory \fI<application>-<version>/\fR that is now created in the current
+directory.
 
 .TP
 .B wine-app-packager\fR prepare
@@ -31,7 +39,7 @@ the current content of the package (if any).
 
 .TP
 .B wine-app-packager\fR run \fI<cmd>\fR
-runs \fR<cmd>\fR in a way that \fBWINEPREFIX\fR is set correctly, i.e.
+runs \fR<cmd>\fR in a way that \fB$WINEPREFIX\fR is set correctly, i.e.
 .nf
 wine-app-packager run wine /tmp/install.exe
 .fi
@@ -50,6 +58,25 @@ Removes \fI~/.wine-<application>-master\fR afterwards.
 .TP
 .B wine-app-packager\fR abort
 Just removes \fI~/.wine-<application>-master\fR, throwing away all changes.
+
+.SH "FILES"
+
+The resulting \fBwine-<application>\fR packages use the following files and directories:
+
+.TP
+\fI/usr/bin/<application>\fR
+Shell wrapper that creates the users dedicated \fB$WINEPREFIX\fR as
+\fI~/.wine-<application>\fR, fills it with the provided wine configuration and
+symlinks to the \fIdrive_c/\fR and starts the application, using the wine
+binary found at \fI/usr/bin/wine\fR.
+
+.TP
+\fI/opt/wineapps/wine-<application>\fR
+The location for the prepared \fIC:\\\fR folder.
+
+.TP
+\fI/opt/wineapps/wine-<application>/wine-config.tar.gz\fR
+The template for the users wine configuration directory.
 
 .SH "EXAMPLES"
 
