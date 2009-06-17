@@ -31,13 +31,13 @@ $WAP init 7z <<''
 1.2.3
 
 
-if [ ! -d 7z-1.2.3 ]
+if [ ! -d wine-7z-1.2.3 ]
 then
-	echo "init did not create the 7z-1.2.3 directory"
+	echo "init did not create the wine-7z-1.2.3 directory"
 	exit 1
 fi
 
-cd 7z-1.2.3
+cd wine-7z-1.2.3
 
 $WAP prepare
 

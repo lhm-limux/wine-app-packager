@@ -35,6 +35,7 @@ function common_setup () {
 	fi
 
 	APPNAME="$(grep-dctrl -n -F Source -s Source '' < debian/control)"
+	APPNAME="${APPNAME/wine-/}"
 	DEBVERSION="$(dpkg-parsechangelog | grep-dctrl -n -s Version '')"
 	WINE_MASTER_DIR=~/".wine-$APPNAME-master"
 }
@@ -83,7 +84,8 @@ if [ "$1" = "init" ]
 then
 	cat <<__END__
 Please enter the name of the application (only lower letters, digits, dots and
-dashes. It will be both the package name and the name of the wrapper executable.
+dashes. It will be the name of the wrapper executable, and, with a wine-
+prepended, the name of the package
 Example: wsftp
 __END__
 
@@ -97,7 +99,10 @@ __END__
 	cat <<__END__
 Please enter the upstream version of the application, with the same conventions.
 If there is no meaningful version, leave this field empty.
-Example: 1.0
+If you want to include a local revision number, append it with a dot (.). Do
+not use dashes (-) unless you want to generate non-native Debian source package
+format.
+Example: 1.0.rev1
 __END__
 
 	read APPVER
@@ -113,7 +118,7 @@ __END__
 	else
 		DEBVER="$APPVER"
 	fi
-	DEBDIR="$APPNAME-$DEBVER"
+	DEBDIR="wine-$APPNAME-$DEBVER"
 
 	if [ -e "$DEBDIR" ]
 	then
@@ -141,11 +146,11 @@ __END__
 		MAINT="Someone <please-update@in.here>"
 	fi
 	cat >"$DEBDIR/debian/control" <<__END__
-Source: $APPNAME
+Source: wine-$APPNAME
 Maintainer: $MAINT
 Build-Depends: debhelper (>= 6.0.7~)
 
-Package: $APPNAME
+Package: wine-$APPNAME
 Architecture: all
 Depends: \${wine:Depends}
 Description: Application $APPNAME
@@ -179,7 +184,7 @@ install: build
 	     exit 1; \
 	fi
 
-	if ! -x \${WINEBINARY}; \
+	if [ ! -x \${WINEBINARY} ]; \
 	then echo "File referenced by WINE=\${WINEBINARY} in the script $APPNAME does not exist."; \
 	     exit 1;\
 	fi
@@ -258,7 +263,7 @@ __END__
 	chmod +x "$DEBDIR/$APPNAME" 
 	echo "Generating \"$DEBDIR/debian/changelog\""
 	pushd "$DEBDIR"
- 	debchange --create --package "$APPNAME" --newversion "$DEBVER" --distribution UNRELEASED "First release of $APPNAME"
+ 	debchange --create --package "wine-$APPNAME" --newversion "$DEBVER" --distribution UNRELEASED "First release of $APPNAME"
 	popd
 	cat <<__END__
 Done preparing the source package. You can review the contents of these files
