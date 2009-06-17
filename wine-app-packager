@@ -73,6 +73,8 @@ wine-app-packager commit
 
 wine-app-packager abort
 	Just removes ~/.wine-<application>-master, throwing away all changes.
+
+A more complete description can be found in the manpage for wine-app-packager.
 __END__
 	exit 1;
 fi
