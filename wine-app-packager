@@ -156,6 +156,10 @@ __END__
 	echo "Writing \"$DEBDIR/debian/rules\""
 	cat >"$DEBDIR/debian/rules" <<__END__
 #!/usr/bin/make -f
+
+WINEBINARY := \$(shell awk 'BEGIN { FS="=" } \$\$1 == "WINE" {print \$\$2}' < $APPNAME)
+WINEPKG := \$(word 1,\$(subst :, ,\$(shell dpkg-query -S \$\$(readlink -f \${WINEBINARY}))))
+
 build:
 	
 
@@ -173,7 +177,12 @@ install: build
 	if grep -q "^EXE='c:.Programme.Please Adjust.start.exe'" $APPNAME ; \
 	then echo "Please update the EXE variable in the script $APPNAME"; \
 	     exit 1; \
-	fi;
+	fi
+
+	if ! -x \${WINEBINARY}; \
+	then echo "File referenced by WINE=\${WINEBINARY} in the script $APPNAME does not exist."; \
+	     exit 1;\
+	fi
 
 binary-arch: install
 	# nothing to do here
@@ -193,7 +202,7 @@ binary-indep: install
 	dh_fixperms
 	dh_installdeb
 	dh_shlibdeps
-	dh_gencontrol -- -Vwine:Depends="\$\$(dpkg-query -S \$\$(readlink -f /usr/bin/wine) | cut -d: -f1)"
+	dh_gencontrol -- -Vwine:Depends=\${WINEPKG}
 	dh_md5sums
 	dh_builddeb
 
@@ -227,6 +236,7 @@ __END__
 
 # This variable need to be set:
 EXE='c:\\Programme\\Please Adjust\\start.exe'
+WINE=/usr/bin/wine
 
 # These are already filled correctly
 APPNAME="$APPNAME"
@@ -243,7 +253,7 @@ fi
 
 
 export WINEPREFIX="\$WINE_HOME"
-exec wine "\$EXE"
+exec "\$WINE" "\$EXE"
 __END__
 	chmod +x "$DEBDIR/$APPNAME" 
 	echo "Generating \"$DEBDIR/debian/changelog\""
@@ -253,7 +263,8 @@ __END__
 	cat <<__END__
 Done preparing the source package. You can review the contents of these files
 now, or go ahead with wine-app-packager prepare, from within the created source
-directory in $DEBDIR.
+directory in $DEBDIR. Do not forget to set the variable \$EXE and possibly the variable \$WINE 
+in the wrapper script $DEBDIR/$APPNAME.
 __END__
 
 elif [ "$1" = "prepare" ]

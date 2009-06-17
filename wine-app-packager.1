@@ -18,11 +18,13 @@ guides you in wrapping a Windows program in a Debian package,
 based on wine. It will create a template Debian source package for you and
 include the \fIC:\\\fR directory tree of your program.
 .PP
-The produced packages will install the provided \fIdrive_c/\fR directory to
-\fI/opt/wineapps/wine-<application>\fR and a copy of the wine configuration as
-\fI/opt/wineapps/wine-<application>/wine-config.tar.gz\fR. A wrapper will be
-placed in \fI/usr/bin/<application>\fR. The package will depend on the
-currently used wine package, i.e. the package that ships \fI/usr/bin/wine\fR. If that file happens to be a symlink, it will be followed.
+The produced packages will install the provided \fIdrive_c/\fR directory  and a
+copy of the wine configuration to the appropriate places (see below). A wrapper
+will be placed in \fI/usr/bin/<application>\fR. This wrapper also contains the
+name of the actual \fI.exe\fR file to be used.
+.PP
+The package will depend on the
+currently used wine package, i.e. the package that ships the wine binary configured in the the wrapper script (default: \fI/usr/bin/wine\fR). If that file happens to be a symlink, it will be followed.
 
 .SH OPTIONS
 .TP
@@ -47,17 +49,20 @@ or
 .nf
 wine-app-packager run wine C:\\\\Applications\\\\DemoApplication\\\\DemoApplication.exe
 .fi
+If you want to use a wine installation that is not in the default path, you
+need to specify the full path to the wine binary here. In this case, you also
+need to update the \fB$WINE\fR variable in the wrapper script.
 
 .TP
 .B wine-app-packager\fR commit
 takes the changes you made in \fI~/.wine-<application>-master\fR and puts them
-back into the Debian source package. Ususally, this will be followed by
+back into the Debian source package. Usually, this will be followed by
 calls to \fBdebchange\fR and \fBdebuild\fR to build the package.
 Removes \fI~/.wine-<application>-master\fR afterwards.
 
 .TP
 .B wine-app-packager\fR abort
-Just removes \fI~/.wine-<application>-master\fR, throwing away all changes.
+just removes \fI~/.wine-<application>-master\fR, throwing away all changes.
 
 .SH "FILES"
 
@@ -67,8 +72,8 @@ The resulting \fBwine-<application>\fR packages use the following files and dire
 \fI/usr/bin/<application>\fR
 Shell wrapper that creates the users dedicated \fB$WINEPREFIX\fR as
 \fI~/.wine-<application>\fR, fills it with the provided wine configuration and
-symlinks to the \fIdrive_c/\fR and starts the application, using the wine
-binary found at \fI/usr/bin/wine\fR.
+symlinks to the \fIdrive_c/\fR and starts the application, using the configured wine
+binary (default: \fI/usr/bin/wine\fR).
 
 .TP
 \fI/opt/wineapps/wine-<application>\fR
@@ -88,9 +93,9 @@ $ wine-app-packager init
 1.2.3
 $ cd 7z-1.2.3
 $ wine-app-packager prepare
-$ wine-app-packager run /tmp/7z465.exe
+$ wine-app-packager run /opt/wine/wine-3.4.5/bin/wine /tmp/7z465.exe
 $ wine-app-packager commit
-$ edit ./z7 # set the EXE= variable
+$ edit ./z7 # set the EXE= variable, possibly the WINE= variable, too
 $ debuild -uc -us
 $ sudo debi
 $ 7z
