@@ -130,6 +130,7 @@ __END__
 	if [ -n "$DEBFULLNAME" ]
 	then
 		MAINT="$DEBFULLNAME <$DEBEMAIL>"
+		echo "Using maintainer address \"$MAINT\""
 	else
 		cat <<__END__
 WARNING: DEBFULLNAME and DEBEMAIL not set. Please adjust maintainer field
